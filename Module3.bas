@@ -15,44 +15,44 @@ Function RemoveAccents(text As String) As String
     RemoveAccents = text
 End Function
 
-Sub CrearTablaFiltrosrecientefr()
-    Dim wsPersonal As Worksheet
-    Dim wsFiltros As Worksheet
+Sub CreerTableFiltres()
+    Dim wsPersonnel As Worksheet
+    Dim wsFiltres As Worksheet
     Dim wsBasseDeD As Worksheet
-    Dim lastRowPersonal As Long
-    Dim lastRowFiltros As Long
+    Dim lastRowPersonnel As Long
+    Dim lastRowFiltres As Long
     Dim i As Long
-    Dim mes As String
+    Dim mois As String
     Dim joursDeTravail As Long
-    Dim fechaDebut As Date
-    Dim fechaFin As Date
+    Dim dateDebut As Date
+    Dim dateFin As Date
     Dim anne As Long
     Dim moiss As String
-    Dim wbPersonal As Workbook
+    Dim wbPersonnel As Workbook
     Dim Nom_complet_fichier_de_traitement As String
     Dim Nom_court_fichier_de_traitement As String
     Dim formulaStr As String
     
     ' Demander à l'utilisateur de sélectionner le mois
-    mes = InputBox("S'il vous plaît, entrez le mois (en formato MMM):", "Sélection du mois")
+    mois = InputBox("S'il vous plaît, entrez le mois (en formato MMM):", "Sélection du mois")
     
-    If mes = "" Then Exit Sub ' Quitter si l'utilisateur annule
+    If mois = "" Then Exit Sub ' Quitter si l'utilisateur annule
     
     ' Convertir le mois saisi en majuscules et enlever les accents
-    mes = RemoveAccents(UCase(mes))
+    mois = RemoveAccents(UCase(mois))
     
     ' Définir la feuille "BASSE DE D" dans le livre actuel
     Set wsBasseDeD = ActiveWorkbook.Sheets("BASSE DE D")
     
     ' Rechercher le mois dans la feuille "BASSE DE D" et obtenir les données correspondantes
-    Dim rngMes As Range
+    Dim rngmois As Range
     Dim cell As Range
     Dim found As Boolean
     found = False
     
     For Each cell In wsBasseDeD.Columns("B").Cells
-        If InStr(1, RemoveAccents(UCase(cell.Value)), mes) > 0 Then
-            Set rngMes = cell
+        If InStr(1, RemoveAccents(UCase(cell.Value)), mois) > 0 Then
+            Set rngmois = cell
                 found = True
             Exit For
         End If
@@ -65,14 +65,14 @@ Sub CrearTablaFiltrosrecientefr()
     
     ' Vérifier si la feuille "FILTRES" existe déjà et demander une confirmation pour la remplacer
     On Error Resume Next
-    Set wsFiltros = ThisWorkbook.Sheets("FILTRES")
+    Set wsFiltres = ActiveWorkbook.Sheets("FILTRES")
     On Error GoTo 0
-    If Not wsFiltros Is Nothing Then
+    If Not wsFiltres Is Nothing Then
         Dim answer As VbMsgBoxResult
         answer = MsgBox("Voulez-vous remplacer la table de FILTRES existante ?", vbYesNo + vbQuestion, "Confirmer le remplacement")
         If answer = vbYes Then
             Application.DisplayAlerts = False ' Désactiver les alertes pour supprimer la feuille
-            wsFiltros.Delete ' Supprimer la feuille existante
+            wsFiltres.Delete ' Supprimer la feuille existante
             Application.DisplayAlerts = True
         Else
             Exit Sub ' Quitter si l'utilisateur décide de ne pas remplacer le tableau
@@ -84,25 +84,25 @@ Sub CrearTablaFiltrosrecientefr()
     If Nom_complet_fichier_de_traitement = "False" Then Exit Sub ' Quitter si l'utilisateur annule
     
     ' Ouvrir le fichier en utilisant le chemin complet
-    Set wbPersonal = Workbooks.Open(Nom_complet_fichier_de_traitement)
-    Set wsPersonal = wbPersonal.Sheets(1) ' Assumer que les données sont dans la première feuille
+    Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
+    Set wsPersonnel = wbPersonnel.Sheets(1) ' Assumer que les données sont dans la première feuille
     
     ' Créer la nouvelle feuille appelée "FILTRES"
-    Set wsFiltros = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-    wsFiltros.Name = "FILTRES"
+    Set wsFiltres = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+    wsFiltres.Name = "FILTRES"
     
     ' Stocker l'information dans des variables
-    anne = rngMes.Offset(0, -1).Value ' Colonne A
-    moiss = CStr(rngMes.Value) ' Colonne B
-    fechaDebut = rngMes.Offset(0, 1).Value ' Colonne C
-    fechaFin = rngMes.Offset(0, 2).Value ' Columna D
-    joursDeTravail = rngMes.Offset(0, 3).Value ' Colonne E
+    anne = rngmois.Offset(0, -1).Value ' Colonne A
+    moiss = CStr(rngmois.Value) ' Colonne B
+    dateDebut = rngmois.Offset(0, 1).Value ' Colonne C
+    dateFin = rngmois.Offset(0, 2).Value ' Columna D
+    joursDeTravail = rngmois.Offset(0, 3).Value ' Colonne E
     
     ' Trouver la dernière ligne avec des données dans la feuille sélectionnée
-    lastRowPersonal = wsPersonal.Cells(wsPersonal.Rows.Count, "K").End(xlUp).Row
+    lastRowPersonnel = wsPersonnel.Cells(wsPersonnel.Rows.Count, "K").End(xlUp).Row
     
     ' Titres de colonne et attribution de valeurs communes
-    With wsFiltros
+    With wsFiltres
         .Range("A2:H4").Merge
         .Range("A2:H4").Value = "AFFECTATIONS AUTOS " & moiss & " " & anne & ""
         .Range("A2:H4").HorizontalAlignment = xlCenter
@@ -121,13 +121,12 @@ Sub CrearTablaFiltrosrecientefr()
         .Range("F7").Value = "Rattachement Agence"
         .Range("G7").Value = "Prenom"
         .Range("H7").Value = "Libellé"
-        
         .Range("G5").Value = "Jours de travail:"
         .Range("A5").Value = "Date debut:"
         .Range("C5").Value = "Date fin:"
         .Range("H5").Value = joursDeTravail
-        .Range("B5").Value = fechaDebut
-        .Range("D5").Value = fechaFin
+        .Range("B5").Value = dateDebut
+        .Range("D5").Value = dateFin
         
         ' Appliquer un format aux titres
         .Range("A7:H7").Font.Bold = True
@@ -135,73 +134,73 @@ Sub CrearTablaFiltrosrecientefr()
     End With
     
     ' Trouver la dernière ligne avec des données dans la colonne BC
-    lastRow = wsPersonal.Cells(wsPersonal.Rows.Count, "BC").End(xlUp).Row
+    lastRow = wsPersonnel.Cells(wsPersonnel.Rows.Count, "BC").End(xlUp).Row
     
     ' Parcourir chaque cellule de la colonne BC
     For i = 1 To lastRow
-        cellValue = wsPersonal.Cells(i, "BC").Value
+        cellValue = wsPersonnel.Cells(i, "BC").Value
         If IsNumeric(cellValue) Then
             ' Si la valeur est numérique, l'arrondir à un chiffre après la virgule et supprimer les zéros inutiles
             cellValue = Round(cellValue, 1)
             If Int(cellValue) = cellValue Then
                 ' Si le nombre arrondi est un entier, supprimer la décimale
-                wsPersonal.Cells(i, "BC").Value = Int(cellValue)
+                wsPersonnel.Cells(i, "BC").Value = Int(cellValue)
             Else
                 ' Si le nombre arrondi n'est pas un entier, l'afficher avec une décimale
-                wsPersonal.Cells(i, "BC").Value = cellValue
+                wsPersonnel.Cells(i, "BC").Value = cellValue
             End If
             
             ' Supprimer le zéro des cellules vides
-            If wsPersonal.Cells(i, "BC").Value = 0 Then
-                wsPersonal.Cells(i, "BC").ClearContents
+            If wsPersonnel.Cells(i, "BC").Value = 0 Then
+                wsPersonnel.Cells(i, "BC").ClearContents
             End If
         End If
     Next i
     
     ' Créer un objet Dictionary pour stocker des noms uniques
-    Dim nombresUnicos As Object
-    Set nombresUnicos = CreateObject("Scripting.Dictionary")
+    Dim nomsUniques As Object
+    Set nomsUniques = CreateObject("Scripting.Dictionary")
     
     ' Copier les noms des travailleurs et les codes opérationnels dans FILTRES
-    For i = 2 To lastRowPersonal ' Commencer à partir de la deuxième ligne en supposant que la première est un en-tête
+    For i = 2 To lastRowPersonnel ' Commencer à partir de la deuxième ligne en supposant que la première est un en-tête
         ' Obtenir le nom du travailleur et le code opérationnel
         Dim nombre As String
-        Dim codigo As String
+        Dim code As String
         Dim prenom As String
-        nombre = wsPersonal.Cells(i, "K").Value
-        codigo = wsPersonal.Cells(i, "AN").Value
-        prenom = wsPersonal.Cells(i, "L").Value
+        nombre = wsPersonnel.Cells(i, "K").Value
+        code = wsPersonnel.Cells(i, "AN").Value
+        prenom = wsPersonnel.Cells(i, "L").Value
         
         ' Vérifier si le nom est déjà dans le tableau FILTRES
-        If Not nombresUnicos.Exists(codigo & nombre) Then
+        If Not nomsUniques.Exists(code & nombre) Then
             ' Ajouter le nom au Dictionary
-            nombresUnicos(codigo & nombre) = True
+            nomsUniques(code & nombre) = True
             ' Trouver la prochaine ligne vide dans FILTRES
-            lastRowFiltros = wsFiltros.Cells(wsFiltros.Rows.Count, "A").End(xlUp).Row + 1
+            lastRowFiltres = wsFiltres.Cells(wsFiltres.Rows.Count, "A").End(xlUp).Row + 1
             ' Copier les informations des colonnes supplémentaires de la feuille de données
-            With wsFiltros
+            With wsFiltres
                 ' Supprimer le texte indésirable "(e)" avant d'attribuer les valeurs à la colonne I
                 Dim valorI As Variant
-                valorI = Replace(wsPersonal.Cells(i, "I").Value, "(e)", "")
-                .Cells(lastRowFiltros, 1).Value = valorI
-                .Cells(lastRowFiltros, 2).Value = nombre
-                .Cells(lastRowFiltros, 3).Value = codigo
+                valorI = Replace(wsPersonnel.Cells(i, "I").Value, "(e)", "")
+                .Cells(lastRowFiltres, 1).Value = valorI
+                .Cells(lastRowFiltres, 2).Value = nombre
+                .Cells(lastRowFiltres, 3).Value = code
                 ' Définir la formule dans la colonne D
-                .Cells(lastRowFiltros, 4).Formula = "=IFERROR(SUMIFS('[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!$BC:$BC, '[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!K:K, """ & nombre & """, '[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!L:L, """ & prenom & """, '[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!AN:AN, """ & codigo & """)/SUMIFS('[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!$BC:$BC, '[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!K:K, """ & nombre & """, '[" & wbPersonal.Name & "]" & wsPersonal.Name & "'!L:L, """ & prenom & """), """")"
+                .Cells(lastRowFiltres, 4).Formula = "=IFERROR(SUMIFS('[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!$BC:$BC, '[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!K:K, """ & nombre & """, '[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!L:L, """ & prenom & """, '[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!AN:AN, """ & code & """)/SUMIFS('[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!$BC:$BC, '[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!K:K, """ & nombre & """, '[" & wbPersonnel.Name & "]" & wsPersonnel.Name & "'!L:L, """ & prenom & """), """")"
                 ' Définir la formule dans la colonne E
-                .Cells(lastRowFiltros, 5).Formula = "=IFERROR(ROUND(D" & lastRowFiltros & "*" & joursDeTravail & ", 0), 0)"
-                .Cells(lastRowFiltros, 7).Value = prenom ' Colonne L (Prenom)
-                .Cells(lastRowFiltros, 8).Value = wsPersonal.Cells(i, "R").Value ' Colonne R (Libellé)
+                .Cells(lastRowFiltres, 5).Formula = "=IFERROR(ROUND(D" & lastRowFiltres & "*" & joursDeTravail & ", 0), 0)"
+                .Cells(lastRowFiltres, 7).Value = prenom ' Colonne L (Prenom)
+                .Cells(lastRowFiltres, 8).Value = wsPersonnel.Cells(i, "R").Value ' Colonne R (Libellé)
             End With
         End If
     Next i
     
     ' Trier le tableau par la colonne NOM
-    With wsFiltros.Sort
+    With wsFiltres.Sort
         .SortFields.Clear
-        .SortFields.Add Key:=wsFiltros.Range("B8:B" & lastRowFiltros), _
+        .SortFields.Add Key:=wsFiltres.Range("B8:B" & lastRowFiltres), _
             SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
-        .SetRange wsFiltros.Range("A7:H" & lastRowFiltros)
+        .SetRange wsFiltres.Range("A7:H" & lastRowFiltres)
         .Header = xlYes
         .MatchCase = False
         .Orientation = xlTopToBottom
@@ -210,62 +209,62 @@ Sub CrearTablaFiltrosrecientefr()
     End With
     
     ' Initialiser les variables pour le suivi des sections
-    Dim inicioSeccion As Long
-    Dim finSeccion As Long
-    Dim sumaDias As Double
+    Dim debutSection As Long
+    Dim finSection As Long
+    Dim sommeJours As Double
     
-    ' Itérer sur les lignes pour ajuster les sommes dans chaque section
-    inicioSeccion = 8 ' Commencer à partir de la ligne 8 où commencent les données
-    For i = 8 To lastRowFiltros
-        If wsFiltros.Cells(i, 1).Value <> wsFiltros.Cells(i + 1, 1).Value Or i = lastRowFiltros Then
+    ' Itérer sur les lignes pour ajuster les sommois dans chaque section
+    debutSection = 8 ' Commencer à partir de la ligne 8 où commencent les données
+    For i = 8 To lastRowFiltres
+        If wsFiltres.Cells(i, 1).Value <> wsFiltres.Cells(i + 1, 1).Value Or i = lastRowFiltres Then
             ' Si la section change ou si c'est la dernière ligne, calculer la somme des jours dans la section
-            finSeccion = i
+            finSection = i
             ' Calculer la somme des jours dans la section
-            sumaDias = Application.WorksheetFunction.Sum(wsFiltros.Range("E" & inicioSeccion & ":E" & finSeccion))
+            sommeJours = Application.WorksheetFunction.Sum(wsFiltres.Range("E" & debutSection & ":E" & finSection))
             
             ' Problème en janvier
-            If sumaDias = 0 Then
-                sumaDias = 1
+            If sommeJours = 0 Then
+                sommeJours = 1
             End If
             
             ' Ajuster la somme des jours à la quantité de jours dans la section
-            Dim proporcionDias As Double
-            proporcionDias = joursDeTravail / sumaDias
+            Dim proportionJours As Double
+            proportionJours = joursDeTravail / sommeJours
             
             ' Appliquer l'ajustement à la colonne E dans la section
-            For j = inicioSeccion To finSeccion
-                wsFiltros.Cells(j, 5).Value = Round(wsFiltros.Cells(j, 5).Value * proporcionDias, 0)
+            For j = debutSection To finSection
+                wsFiltres.Cells(j, 5).Value = Round(wsFiltres.Cells(j, 5).Value * proportionJours, 0)
             Next j
             
             ' Recalculer la somme des jours après l'ajustement
-            sumaDias = Application.WorksheetFunction.Sum(wsFiltros.Range("E" & inicioSeccion & ":E" & finSeccion))
+            sommeJours = Application.WorksheetFunction.Sum(wsFiltres.Range("E" & debutSection & ":E" & finSection))
             
             ' Si la somme de la section dépasse joursDeTravail, soustraire l'excédent du dernier jour de la section
-            If sumaDias > joursDeTravail Then
-                wsFiltros.Cells(finSeccion, 5).Value = wsFiltros.Cells(finSeccion, 5).Value - (sumaDias - joursDeTravail)
+            If sommeJours > joursDeTravail Then
+                wsFiltres.Cells(finSection, 5).Value = wsFiltres.Cells(finSection, 5).Value - (sommeJours - joursDeTravail)
             End If
             
             ' Si la somme de la section est inférieure à joursDeTravail, ajouter la différence au dernier jour de la section
-            If sumaDias < joursDeTravail Then
-                wsFiltros.Cells(finSeccion, 5).Value = wsFiltros.Cells(finSeccion, 5).Value + (joursDeTravail - sumaDias)
+            If sommeJours < joursDeTravail Then
+                wsFiltres.Cells(finSection, 5).Value = wsFiltres.Cells(finSection, 5).Value + (joursDeTravail - sommeJours)
             End If
             
         ' Mettre à jour le début de la section suivante
-        inicioSeccion = i + 1
+        debutSection = i + 1
         End If
     Next i
     
     ' Copier et coller les valeurs des colonnes D et E à la fin du tableau
-    wsFiltros.Range("D8:E" & lastRowFiltros).Value = wsFiltros.Range("D8:E" & lastRowFiltros).Value
+    wsFiltres.Range("D8:E" & lastRowFiltres).Value = wsFiltres.Range("D8:E" & lastRowFiltres).Value
     
     ' Format de pourcentage dans la colonne POURCENTAGE
-    wsFiltros.Range("D8:D" & lastRowFiltros).NumberFormat = "0.0%"
+    wsFiltres.Range("D8:D" & lastRowFiltres).NumberFormat = "0.0%"
     
     ' Appliquer un style à la table
-    wsFiltros.ListObjects.Add(xlSrcRange, wsFiltros.Range("A7:H" & lastRowFiltros), , xlYes).TableStyle = "TableStyleMedium9"
+    wsFiltres.ListObjects.Add(xlSrcRange, wsFiltres.Range("A7:H" & lastRowFiltres), , xlYes).TableStyle = "TableStyleMedium9"
     
     ' Exécuter la macro MultiplicarPourcentage
-    MultiplicarPorcentaje
+    MultiplierPourcentage
     
     ' Enregistrer le nouveau document et copier la feuille FILTRES dans le nouveau classeur
     Dim newWorkbook As Workbook
@@ -283,7 +282,7 @@ Sub CrearTablaFiltrosrecientefr()
         
         ' Définir le nom du fichier avec le chemin complet
         Dim fileName As String
-        fileName = folderPath & "\Imp-VLJOUR-" & Format(fechaFin, "yyyymmdd") & ".xlsm"
+        fileName = folderPath & "\Imp-VLJOUR-" & Format(dateFin, "yyyymmdd") & ".xlsm"
         
         ' Enregistrer le nouveau classeur dans le dossier sélectionné
         Application.DisplayAlerts = False
@@ -306,10 +305,10 @@ Sub CrearTablaFiltrosrecientefr()
     End If
     
     ' Fermer le fichier de données sans enregistrer les modifications
-    wbPersonal.Close SaveChanges:=False
+    wbPersonnel.Close SaveChanges:=False
 End Sub
 
-Sub MultiplicarPorcentaje()
+Sub MultiplierPourcentage()
     Dim Nom_complet_fichier_de_traitement As String
     Dim wbSource As Workbook
     Dim ws As Worksheet
@@ -317,7 +316,7 @@ Sub MultiplicarPorcentaje()
     Dim lastRow As Long
     Dim currentRow As Long
     Dim currentEmployer As String
-    Dim totalPercentage As Double
+    Dim totalPourcentage As Double
     Dim scaleFactor As Double
     Dim totalAdjusted As Double
     Dim adjustment As Integer
@@ -358,7 +357,7 @@ Sub MultiplicarPorcentaje()
     
     ' Initialiser la plage de début pour chaque section
     currentRow = 2
-    totalPercentage = 0
+    totalPourcentage = 0
     totalAdjusted = 0
     
     ' Parcourir chaque ligne dans la colonne A de la feuille
@@ -366,8 +365,8 @@ Sub MultiplicarPorcentaje()
         ' Vérifier si le nom et le prénom de l'employeur ont changé
         If ws.Cells(i, 1).Value <> currentEmployer Or ws.Cells(i, 2).Value <> prenom Then
             ' S'il s'agit d'un nouvel employeur ou d'un nouveau prénom, calculer le facteur d'échelle pour la section précédente
-            If totalPercentage > 0 Then
-                scaleFactor = newValue / totalPercentage ' Le nouveau montant est utilisé
+            If totalPourcentage > 0 Then
+                scaleFactor = newValue / totalPourcentage ' Le nouveau montant est utilisé
                 ' Multiplier chaque pourcentage par le facteur d'échelle et arrondir
                 For j = currentRow To i - 1
                     ws.Cells(j, 5).Value = Round(ws.Cells(j, 4).Value * scaleFactor, 0)
@@ -381,17 +380,16 @@ Sub MultiplicarPorcentaje()
             currentEmployer = ws.Cells(i, 1).Value
             prenom = ws.Cells(i, 2).Value
             currentRow = i
-            totalPercentage = 0
+            totalPourcentage = 0
             totalAdjusted = 0
         End If
         ' Additionner les pourcentages pour cette section
-        totalPercentage = totalPercentage + ws.Cells(i, 4).Value
+        totalPourcentage = totalPourcentage + ws.Cells(i, 4).Value
     Next i
     
     ' Calculer le facteur d'échelle pour la dernière section
-    
-    If totalPercentage > 0 Then
-        scaleFactor = newValue / totalPercentage ' Le nouveau montant est utilisé
+    If totalPourcentage > 0 Then
+        scaleFactor = newValue / totalPourcentage ' Le nouveau montant est utilisé
         ' Multiplie chaque pourcentage par le facteur d'échelle et arrondis
         For j = currentRow To lastRow
             ws.Cells(j, 5).Value = Round(ws.Cells(j, 4).Value * scaleFactor, 0)
@@ -488,12 +486,12 @@ Sub MultiplicarPorcentaje()
             ' Si la section change, recalculer les pourcentages
             sectionEnd = i - 1
             ' Additionner les valeurs actuelles de la colonne D dans la section
-            totalPercentage = Application.WorksheetFunction.Sum(wsFiltres.Range("D" & sectionStart & ":D" & sectionEnd))
+            totalPourcentage = Application.WorksheetFunction.Sum(wsFiltres.Range("D" & sectionStart & ":D" & sectionEnd))
             
             ' Recalculer les pourcentages pour que la somme soit 100%
-            If totalPercentage <> 0 Then
+            If totalPourcentage <> 0 Then
                 For j = sectionStart To sectionEnd
-                    wsFiltres.Cells(j, 4).Value = wsFiltres.Cells(j, 4).Value / totalPercentage
+                    wsFiltres.Cells(j, 4).Value = wsFiltres.Cells(j, 4).Value / totalPourcentage
                 Next j
             End If
             
@@ -506,11 +504,11 @@ Sub MultiplicarPorcentaje()
     
     ' Assurer le recalcul de la dernière section
     sectionEnd = wsFiltres.Cells(wsFiltres.Rows.Count, "B").End(xlUp).Row
-    totalPercentage = Application.WorksheetFunction.Sum(wsFiltres.Range("D" & sectionStart & ":D" & sectionEnd))
+    totalPourcentage = Application.WorksheetFunction.Sum(wsFiltres.Range("D" & sectionStart & ":D" & sectionEnd))
     
-    If totalPercentage <> 0 Then
+    If totalPourcentage <> 0 Then
         For j = sectionStart To sectionEnd
-            wsFiltres.Cells(j, 4).Value = wsFiltres.Cells(j, 4).Value / totalPercentage
+            wsFiltres.Cells(j, 4).Value = wsFiltres.Cells(j, 4).Value / totalPourcentage
         Next j
     End If
     
@@ -535,4 +533,3 @@ Sub MultiplicarPorcentaje()
     Application.Calculation = xlCalculationAutomatic
     
 End Sub
-
