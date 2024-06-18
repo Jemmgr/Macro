@@ -283,7 +283,7 @@ Sub CreerTableFiltres()
         
         ' Définir le nom du fichier avec le chemin complet
         Dim fileName As String
-        fileName = folderPath & "\Imp-VLJOUR-" & Format(dateFin, "yyyymmdd") & ".xlsm"
+        fileName = folderPath & "\Imp-VLJOUR-" & Format(dateFin, "yyyymmdd") & ".xlsx"
         
         ' Enregistrer le nouveau classeur dans le dossier sélectionné
         Application.DisplayAlerts = False
