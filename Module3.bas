@@ -1,5 +1,6 @@
 Attribute VB_Name = "Macro"
 
+
 Function RemoveAccents(text As String) As String
     Dim accentedChars As String
     Dim unaccentedChars As String
@@ -15,6 +16,8 @@ Function RemoveAccents(text As String) As String
     
     RemoveAccents = text
 End Function
+
+
 
 Sub CreerTableFiltres()
     Dim wsPersonnel As Worksheet
@@ -308,6 +311,9 @@ Sub CreerTableFiltres()
     ' Fermer le fichier de données sans enregistrer les modifications
     wbPersonnel.Close SaveChanges:=False
 End Sub
+
+
+
 
 Sub MultiplierPourcentage()
     Dim Nom_complet_fichier_de_traitement As String
