@@ -18,7 +18,6 @@ Function RemoveAccents(text As String) As String
 End Function
 
 
-
 Sub CreerTableFiltres()
     Dim wsPersonnel As Worksheet
     Dim wsFiltres As Worksheet
