@@ -1,5 +1,6 @@
 Attribute VB_Name = "Macro"
 
+
 Function RemoveAccents(text As String) As String
     Dim accentedChars As String
     Dim unaccentedChars As String
@@ -15,6 +16,7 @@ Function RemoveAccents(text As String) As String
     
     RemoveAccents = text
 End Function
+
 
 
 Sub CreerTableFiltres()
