@@ -1,6 +1,5 @@
 Attribute VB_Name = "Macro"
 
-
 Function RemoveAccents(text As String) As String
     Dim accentedChars As String
     Dim unaccentedChars As String
@@ -16,7 +15,6 @@ Function RemoveAccents(text As String) As String
     
     RemoveAccents = text
 End Function
-
 
 
 Sub CreerTableFiltres()
@@ -71,6 +69,7 @@ Sub CreerTableFiltres()
     On Error Resume Next
     Set wsFiltres = ActiveWorkbook.Sheets("FILTRES")
     On Error GoTo 0
+    
     If Not wsFiltres Is Nothing Then
         Dim answer As VbMsgBoxResult
         answer = MsgBox("Voulez-vous remplacer la table de FILTRES existante ?", vbYesNo + vbQuestion, "Confirmer le remplacement")
@@ -83,6 +82,19 @@ Sub CreerTableFiltres()
         End If
     End If
     
+    ' Créer la nouvelle feuille appelée "FILTRES"
+    On Error Resume Next
+        ' agrega una nueva hoja después de la última hoja existente
+        ' Ajouter une nouvelle feuille après la dernier feiulle existente
+        Set wsFiltres = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+    On Error GoTo 0
+    
+    If wsFiltres Is Nothing Then
+        Exit Sub
+    End If
+    
+    wsFiltres.Name = "FILTRES"
+    
     ' Demander à l'utilisateur de sélectionner le fichier de données
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier contenant la feuille de PRC")
     If Nom_complet_fichier_de_traitement = "False" Then Exit Sub ' Quitter si l'utilisateur annule
@@ -90,10 +102,6 @@ Sub CreerTableFiltres()
     ' Ouvrir le fichier en utilisant le chemin complet
     Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
     Set wsPersonnel = wbPersonnel.Sheets(1) ' Assumer que les données sont dans la première feuille
-    
-    ' Créer la nouvelle feuille appelée "FILTRES"
-    Set wsFiltres = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-    wsFiltres.Name = "FILTRES"
     
     ' Stocker l'information dans des variables
     anne = rngmois.Offset(0, -1).Value ' Colonne A
@@ -275,6 +283,16 @@ Sub CreerTableFiltres()
     Set newWorkbook = Workbooks.Add ' Créer un nouveau classeur
     ThisWorkbook.Sheets("FILTRES").Copy Before:=newWorkbook.Sheets(1) ' Copier la feuille FILTRES dans le nouveau classeur
     
+    ' Supprimer la feuille vide initiale du nouveau classeur
+    Dim ws As Worksheet
+    For Each ws In newWorkbook.Sheets
+        If ws.Name <> "FILTRES" Then
+            Application.DisplayAlerts = False
+            ws.Delete
+            Application.DisplayAlerts = True
+        End If
+    Next ws
+    
     ' Permettre à l'utilisateur de sélectionner le dossier où enregistrer le fichier
     Dim selectedFolder As FileDialog
     Set selectedFolder = Application.FileDialog(msoFileDialogFolderPicker)
@@ -290,12 +308,7 @@ Sub CreerTableFiltres()
         
         ' Enregistrer le nouveau classeur dans le dossier sélectionné
         Application.DisplayAlerts = False
-        newWorkbook.SaveAs fileName, FileFormat:=xlOpenXMLWorkbookMacroEnabled ' Format de fichier compatible avec les macros
-        Application.DisplayAlerts = True
-        
-        ' Supprimer la deuxième feuille du nouveau classeur
-        Application.DisplayAlerts = False
-        newWorkbook.Sheets(2).Delete
+        newWorkbook.SaveAs fileName, FileFormat:=xlOpenXMLWorkbook ' Format de fichier compatible avec les macros
         Application.DisplayAlerts = True
         
         ' Fermer le classeur sans enregistrer les modifications
@@ -311,7 +324,6 @@ Sub CreerTableFiltres()
     ' Fermer le fichier de données sans enregistrer les modifications
     wbPersonnel.Close SaveChanges:=False
 End Sub
-
 
 
 
@@ -540,3 +552,4 @@ Sub MultiplierPourcentage()
     Application.Calculation = xlCalculationAutomatic
     
 End Sub
+
