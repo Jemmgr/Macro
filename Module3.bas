@@ -19,7 +19,7 @@ Sub CreerTableFiltres()
     Dim formulaStr As String
     Dim wb As Workbook
     
-    ' Referenciar el libro de trabajo actual explícitamente
+    ' Référencer explicitement le classeur actuel
     Set wb = ThisWorkbook
     
     ' Demander à l'utilisateur de sélectionner le mois
@@ -93,37 +93,35 @@ Sub CreerTableFiltres()
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier contenant la feuille de PRC")
     If Nom_complet_fichier_de_traitement = "False" Then Exit Sub ' Quitter si l'utilisateur annule
     
-    ' Verificar la extensión del archivo
+    ' Vérifier l'extension du fichier
     fileExtension = Right(Nom_complet_fichier_de_traitement, Len(Nom_complet_fichier_de_traitement) - InStrRev(Nom_complet_fichier_de_traitement, "."))
     
-    ' Generar un identificador único basado en la fecha y hora actuales
+    ' Générer un identifiant unique basé sur la date et l'heure actuelles
     uniqueID = Format(Now, "yyyymmddHHMMSS")
     
-    ' Si es un archivo CSV, convertirlo a XLSX y separar las columnas
+    ' S'il s'agit d'un fichier CSV, convertissez-le en XLSX et séparez les colonnes
     If fileExtension = "csv" Or fileExtension = "CSV" Then
-        ' Abrir el archivo CSV
-        Workbooks.OpenText fileName:=Nom_complet_fichier_de_traitement, Origin:=xlMSDOS, StartRow:=1, DataType:=xlDelimited, _
+        ' Ouvrir le fichier CSV
+        Workbooks.OpenText fileName:=Nom_complet_fichier_de_traitement, Origin:=xlMSDOS, startRow:=1, DataType:=xlDelimited, _
             TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=True, Comma:=False, Space:=False, Other:=False, _
             FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1)), TrailingMinusNumbers:=True
-        
-        ' Referencia el archivo abierto
+            
+        ' Référencer le fichier ouvert
         Set tempWorkbook = ActiveWorkbook
         
-        ' Guardar el archivo CSV como XLSX en una ubicación temporal con un nombre único
+        ' Enregistrez le fichier CSV au format XLSX dans un emplacement temporaire avec un nom unique
         tempFilePath = Environ("TEMP") & "\temp_converted_file_" & uniqueID & ".xlsx"
         tempWorkbook.SaveAs fileName:=tempFilePath, FileFormat:=xlOpenXMLWorkbook
         tempWorkbook.Close SaveChanges:=False
         
-        ' Abrir el archivo convertido
+        ' Ouvrir le fichier converti
         Set wbPersonnel = Workbooks.Open(tempFilePath)
     Else
-        ' Abrir el archivo directamente si no es un CSV
+        ' Ouvrir le fichier directement s'il ne s'agit pas d'un CSV
         Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
     End If
     
     Set wsPersonnel = wbPersonnel.Sheets(1) ' Assumer que les données sont dans la première feuille
-    
-    
     
     ' Stocker l'information dans des variables
     anne = rngmois.Offset(0, -1).Value ' Colonne A
@@ -143,7 +141,7 @@ Sub CreerTableFiltres()
         .Range("A2:H4").VerticalAlignment = xlCenter
         .Range("A2:H4").Font.Size = 22
         .Range("A5:H5").Font.Size = 11
-        .Range("A2:H4, A5, C5, G5").Font.Bold = True
+        .Range("A2:H4, A5, D5, G5").Font.Bold = True
         
         .Range("A8:H1000").HorizontalAlignment = xlLeft
         
@@ -353,6 +351,7 @@ Sub MultiplierPourcentage(wb As Workbook)
     Dim ws As Worksheet
     Dim wsFiltres As Worksheet
     Dim lastRow As Long
+    Dim startRow As Long
     Dim currentRow As Long
     Dim currentEmployer As String
     Dim totalPourcentage As Double
@@ -367,6 +366,7 @@ Sub MultiplierPourcentage(wb As Workbook)
     Dim code As String
     Dim i As Long
     Dim found As Boolean
+    Dim cell As Range
     
     ' Sélectionner le fichier
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier de pointage")
@@ -394,13 +394,27 @@ Sub MultiplierPourcentage(wb As Workbook)
     ' Trouver la dernière ligne avec des données dans la colonne A de la feuille
     lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
     
+    ' Recherchez la cellule contenant "NOM" dans la colonne A et obtenez la ligne de départ
+    startRow = 0
+    For Each cell In ws.Columns("A").Cells
+        If cell.Value = "NOM" Then
+            startRow = cell.Row + 1
+            Exit For
+        End If
+    Next cell
+    
+    ' Si "NOM" n'est pas trouvé, commencez par la deuxième ligne
+    If startRow = 0 Then
+        startRow = 2
+    End If
+    
     ' Initialiser la plage de début pour chaque section
-    currentRow = 2
+    currentRow = startRow
     totalPourcentage = 0
     totalAdjusted = 0
     
     ' Parcourir chaque ligne dans la colonne A de la feuille
-    For i = 2 To lastRow
+    For i = startRow To lastRow
         ' Vérifier si le nom et le prénom de l'employeur ont changé
         If ws.Cells(i, 1).Value <> currentEmployer Or ws.Cells(i, 2).Value <> prenom Then
             ' S'il s'agit d'un nouvel employeur ou d'un nouveau prénom, calculer le facteur d'échelle pour la section précédente
@@ -440,7 +454,7 @@ Sub MultiplierPourcentage(wb As Workbook)
     End If
     
     ' Supprimer les lignes dans FILTRES qui correspondent au nom et prénom dans repart
-    For i = lastRow To 2 Step -1
+    For i = lastRow To startRow Step -1
         nom = ws.Cells(i, 1).Value
         prenom = ws.Cells(i, 2).Value
         For j = wsFiltres.Cells(wsFiltres.Rows.Count, "B").End(xlUp).Row To 8 Step -1
@@ -454,7 +468,7 @@ Sub MultiplierPourcentage(wb As Workbook)
     nextRowFiltres = wsFiltres.Cells(wsFiltres.Rows.Count, "B").End(xlUp).Row + 1
     
     ' Copie l'information de la table "repart" dans la feuille "FILTRES"
-    For i = 2 To lastRow
+    For i = startRow To lastRow
         ' Obtiens le nom, le prénom et le code de la ligne actuelle dans "repart"
         nom = UCase(ws.Cells(i, 1).Value)
         prenom = UCase(ws.Cells(i, 2).Value)
