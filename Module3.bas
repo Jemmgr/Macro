@@ -1,23 +1,5 @@
 Attribute VB_Name = "Macro"
 
-
-Function RemoveAccents(text As String) As String
-    Dim accentedChars As String
-    Dim unaccentedChars As String
-    Dim i As Integer
-    
-    ' La formule change les lettres avec des accents par des lettres simples, pour rechercher les mois de manière simplifiée
-    accentedChars = "ÁÉÍÓÚÀÈÙÛÔÂÎÏÜËÇáéíóúàèùûôâîïüëç"
-    unaccentedChars = "AEIOUAEUUOAIUECaeiouaeuuoaiuec"
-    
-    For i = 1 To Len(accentedChars)
-        text = Replace(text, Mid(accentedChars, i, 1), Mid(unaccentedChars, i, 1))
-    Next i
-    
-    RemoveAccents = text
-End Function
-
-
 Sub CreerTableFiltres()
     Dim wsPersonnel As Worksheet
     Dim wsFiltres As Worksheet
@@ -85,7 +67,6 @@ Sub CreerTableFiltres()
     
     ' Créer la nouvelle feuille appelée "FILTRES"
     On Error Resume Next
-        ' agrega una nueva hoja después de la última hoja existente
         ' Ajouter une nouvelle feuille après la dernier feiulle existente
         Set wsFiltres = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
     On Error GoTo 0
@@ -94,7 +75,15 @@ Sub CreerTableFiltres()
         Exit Sub
     End If
     
-    wsFiltres.Name = "FILTRES"
+    ' Assurer que le nom de la feuille est unique
+    Dim uniqueName As String
+    uniqueName = "FILTRES"
+    i = 1
+    Do While SheetExists(uniqueName)
+        uniqueName = "FILTRES" & i
+        i = i + 1
+    Loop
+    wsFiltres.Name = uniqueName
     
     ' Demander à l'utilisateur de sélectionner le fichier de données
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier contenant la feuille de PRC")
@@ -326,8 +315,6 @@ Sub CreerTableFiltres()
     wbPersonnel.Close SaveChanges:=False
 End Sub
 
-
-
 Sub MultiplierPourcentage()
     Dim Nom_complet_fichier_de_traitement As String
     Dim wbSource As Workbook
@@ -554,3 +541,27 @@ Sub MultiplierPourcentage()
     
 End Sub
 
+Function RemoveAccents(text As String) As String
+    Dim accentedChars As String
+    Dim unaccentedChars As String
+    Dim i As Integer
+    
+    ' La formule change les lettres avec des accents par des lettres simples, pour rechercher les mois de manière simplifiée
+    accentedChars = "ÁÉÍÓÚÀÈÙÛÔÂÎÏÜËÇáéíóúàèùûôâîïüëç"
+    unaccentedChars = "AEIOUAEUUOAIUECaeiouaeuuoaiuec"
+    
+    For i = 1 To Len(accentedChars)
+        text = Replace(text, Mid(accentedChars, i, 1), Mid(unaccentedChars, i, 1))
+    Next i
+    
+    RemoveAccents = text
+End Function
+
+Function SheetExists(sheetName As String) As Boolean
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(sheetName)
+    On Error GoTo 0
+    SheetExists = Not ws Is Nothing
+    
+End Function
