@@ -17,6 +17,10 @@ Sub CreerTableFiltres()
     Dim Nom_complet_fichier_de_traitement As String
     Dim Nom_court_fichier_de_traitement As String
     Dim formulaStr As String
+    Dim wb As Workbook
+    
+    ' Referenciar el libro de trabajo actual explícitamente
+    Set wb = ThisWorkbook
     
     ' Demander à l'utilisateur de sélectionner le mois
     mois = InputBox("S'il vous plaît, entrez le mois (en formato MMM):", "Sélection du mois")
@@ -27,7 +31,7 @@ Sub CreerTableFiltres()
     mois = RemoveAccents(UCase(mois))
     
     ' Définir la feuille "BASSE DE D" dans le livre actuel
-    Set wsBasseDeD = ActiveWorkbook.Sheets("BASSE DE D")
+    Set wsBasseDeD = wb.Sheets("BASSE DE D")
     
     ' Rechercher le mois dans la feuille "BASSE DE D" et obtenir les données correspondantes
     Dim rngmois As Range
@@ -50,7 +54,7 @@ Sub CreerTableFiltres()
     
     ' Vérifier si la feuille "FILTRES" existe déjà et demander une confirmation pour la remplacer
     On Error Resume Next
-    Set wsFiltres = ActiveWorkbook.Sheets("FILTRES")
+    Set wsFiltres = wb.Sheets("FILTRES")
     On Error GoTo 0
     
     If Not wsFiltres Is Nothing Then
@@ -68,7 +72,7 @@ Sub CreerTableFiltres()
     ' Créer la nouvelle feuille appelée "FILTRES"
     On Error Resume Next
         ' Ajouter une nouvelle feuille après la dernier feiulle existente
-        Set wsFiltres = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        Set wsFiltres = wb.Sheets.Add(After:=wb.Sheets(wb.Sheets.Count))
     On Error GoTo 0
     
     If wsFiltres Is Nothing Then
@@ -89,9 +93,37 @@ Sub CreerTableFiltres()
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier contenant la feuille de PRC")
     If Nom_complet_fichier_de_traitement = "False" Then Exit Sub ' Quitter si l'utilisateur annule
     
-    ' Ouvrir le fichier en utilisant le chemin complet
-    Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
+    ' Verificar la extensión del archivo
+    fileExtension = Right(Nom_complet_fichier_de_traitement, Len(Nom_complet_fichier_de_traitement) - InStrRev(Nom_complet_fichier_de_traitement, "."))
+    
+    ' Generar un identificador único basado en la fecha y hora actuales
+    uniqueID = Format(Now, "yyyymmddHHMMSS")
+    
+    ' Si es un archivo CSV, convertirlo a XLSX y separar las columnas
+    If fileExtension = "csv" Or fileExtension = "CSV" Then
+        ' Abrir el archivo CSV
+        Workbooks.OpenText fileName:=Nom_complet_fichier_de_traitement, Origin:=xlMSDOS, StartRow:=1, DataType:=xlDelimited, _
+            TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=True, Comma:=False, Space:=False, Other:=False, _
+            FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1)), TrailingMinusNumbers:=True
+        
+        ' Referencia el archivo abierto
+        Set tempWorkbook = ActiveWorkbook
+        
+        ' Guardar el archivo CSV como XLSX en una ubicación temporal con un nombre único
+        tempFilePath = Environ("TEMP") & "\temp_converted_file_" & uniqueID & ".xlsx"
+        tempWorkbook.SaveAs fileName:=tempFilePath, FileFormat:=xlOpenXMLWorkbook
+        tempWorkbook.Close SaveChanges:=False
+        
+        ' Abrir el archivo convertido
+        Set wbPersonnel = Workbooks.Open(tempFilePath)
+    Else
+        ' Abrir el archivo directamente si no es un CSV
+        Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
+    End If
+    
     Set wsPersonnel = wbPersonnel.Sheets(1) ' Assumer que les données sont dans la première feuille
+    
+    
     
     ' Stocker l'information dans des variables
     anne = rngmois.Offset(0, -1).Value ' Colonne A
@@ -125,10 +157,10 @@ Sub CreerTableFiltres()
         .Range("H7").Value = "Libellé"
         .Range("G5").Value = "Jours de travail:"
         .Range("A5").Value = "Date debut:"
-        .Range("C5").Value = "Date fin:"
+        .Range("D5").Value = "Date fin:"
         .Range("H5").Value = joursDeTravail
         .Range("B5").Value = dateDebut
-        .Range("D5").Value = dateFin
+        .Range("E5").Value = dateFin
         
         ' Appliquer un format aux titres
         .Range("A7:H7").Font.Bold = True
@@ -266,12 +298,12 @@ Sub CreerTableFiltres()
     wsFiltres.ListObjects.Add(xlSrcRange, wsFiltres.Range("A7:H" & lastRowFiltres), , xlYes).TableStyle = "TableStyleMedium9"
     
     ' Exécuter la macro MultiplicarPourcentage
-    MultiplierPourcentage
+    MultiplierPourcentage wb ' Pasar el libro de trabajo como parámetro
     
     ' Enregistrer le nouveau document et copier la feuille FILTRES dans le nouveau classeur
     Dim newWorkbook As Workbook
     Set newWorkbook = Workbooks.Add ' Créer un nouveau classeur
-    ThisWorkbook.Sheets("FILTRES").Copy Before:=newWorkbook.Sheets(1) ' Copier la feuille FILTRES dans le nouveau classeur
+    wsFiltres.Copy Before:=newWorkbook.Sheets(1) ' Copier la feuille FILTRES dans le nouveau classeur
     
     ' Supprimer la feuille vide initiale du nouveau classeur
     Dim ws As Worksheet
@@ -315,7 +347,7 @@ Sub CreerTableFiltres()
     wbPersonnel.Close SaveChanges:=False
 End Sub
 
-Sub MultiplierPourcentage()
+Sub MultiplierPourcentage(wb As Workbook)
     Dim Nom_complet_fichier_de_traitement As String
     Dim wbSource As Workbook
     Dim ws As Worksheet
@@ -351,7 +383,7 @@ Sub MultiplierPourcentage()
     Set ws = wbSource.Sheets(1)
     
     ' Définir la feuille de travail "FILTRES" dans le livre actuel
-    Set wsFiltres = ThisWorkbook.Sheets("FILTRES")
+    Set wsFiltres = wb.Sheets("FILTRES")
     
     ' Valeur prise de H5 de la feuille FILTRES
     newValue = wsFiltres.Range("H5").Value
