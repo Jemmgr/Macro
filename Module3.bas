@@ -18,8 +18,12 @@ Sub CreerTableFiltres()
     Dim Nom_court_fichier_de_traitement As String
     Dim formulaStr As String
     Dim wb As Workbook
+    Dim fileExtension As String
+    Dim tempWorkbook As Workbook
+    Dim tempFilePath As String
+    Dim uniqueID As String
     
-    ' Référencer explicitement le classeur actuel
+    ' Referenciar el libro de trabajo actual explícitamente
     Set wb = ThisWorkbook
     
     ' Demander à l'utilisateur de sélectionner le mois
@@ -93,31 +97,31 @@ Sub CreerTableFiltres()
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier contenant la feuille de PRC")
     If Nom_complet_fichier_de_traitement = "False" Then Exit Sub ' Quitter si l'utilisateur annule
     
-    ' Vérifier l'extension du fichier
+    ' Verificar la extensión del archivo
     fileExtension = Right(Nom_complet_fichier_de_traitement, Len(Nom_complet_fichier_de_traitement) - InStrRev(Nom_complet_fichier_de_traitement, "."))
     
-    ' Générer un identifiant unique basé sur la date et l'heure actuelles
+    ' Generar un identificador único basado en la fecha y hora actuales
     uniqueID = Format(Now, "yyyymmddHHMMSS")
     
-    ' S'il s'agit d'un fichier CSV, convertissez-le en XLSX et séparez les colonnes
+    ' Si es un archivo CSV, convertirlo a XLSX y separar las columnas
     If fileExtension = "csv" Or fileExtension = "CSV" Then
-        ' Ouvrir le fichier CSV
+        ' Abrir el archivo CSV
         Workbooks.OpenText fileName:=Nom_complet_fichier_de_traitement, Origin:=xlMSDOS, startRow:=1, DataType:=xlDelimited, _
             TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=True, Comma:=False, Space:=False, Other:=False, _
             FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1)), TrailingMinusNumbers:=True
             
-        ' Référencer le fichier ouvert
+        ' Referencia el archivo abierto
         Set tempWorkbook = ActiveWorkbook
         
-        ' Enregistrez le fichier CSV au format XLSX dans un emplacement temporaire avec un nom unique
+        ' Guardar el archivo CSV como XLSX en una ubicación temporal con un nombre único
         tempFilePath = Environ("TEMP") & "\temp_converted_file_" & uniqueID & ".xlsx"
         tempWorkbook.SaveAs fileName:=tempFilePath, FileFormat:=xlOpenXMLWorkbook
         tempWorkbook.Close SaveChanges:=False
         
-        ' Ouvrir le fichier converti
+        ' Abrir el archivo convertido
         Set wbPersonnel = Workbooks.Open(tempFilePath)
     Else
-        ' Ouvrir le fichier directement s'il ne s'agit pas d'un CSV
+        ' Abrir el archivo directamente si no es un CSV
         Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
     End If
     
@@ -141,7 +145,7 @@ Sub CreerTableFiltres()
         .Range("A2:H4").VerticalAlignment = xlCenter
         .Range("A2:H4").Font.Size = 22
         .Range("A5:H5").Font.Size = 11
-        .Range("A2:H4, A5, D5, G5").Font.Bold = True
+        .Range("A2:H4, A5, C5, G5").Font.Bold = True
         
         .Range("A8:H1000").HorizontalAlignment = xlLeft
         
@@ -155,10 +159,10 @@ Sub CreerTableFiltres()
         .Range("H7").Value = "Libellé"
         .Range("G5").Value = "Jours de travail:"
         .Range("A5").Value = "Date debut:"
-        .Range("D5").Value = "Date fin:"
+        .Range("C5").Value = "Date fin:"
         .Range("H5").Value = joursDeTravail
         .Range("B5").Value = dateDebut
-        .Range("E5").Value = dateFin
+        .Range("D5").Value = dateFin
         
         ' Appliquer un format aux titres
         .Range("A7:H7").Font.Bold = True
@@ -227,64 +231,24 @@ Sub CreerTableFiltres()
         End If
     Next i
     
-    ' Trier le tableau par la colonne NOM
-    With wsFiltres.Sort
-        .SortFields.Clear
-        .SortFields.Add Key:=wsFiltres.Range("B8:B" & lastRowFiltres), _
-            SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
-        .SetRange wsFiltres.Range("A7:H" & lastRowFiltres)
-        .Header = xlYes
-        .MatchCase = False
-        .Orientation = xlTopToBottom
-        .SortMethod = xlPinYin
-        .Apply
-    End With
+    ' Verificar que lastRowFiltres sea mayor o igual a 8
+    If lastRowFiltres >= 8 Then
+        ' Trier le tableau par la colonne NOM
+        With wsFiltres.Sort
+            .SortFields.Clear
+            .SortFields.Add Key:=wsFiltres.Range("B8:B" & lastRowFiltres), _
+                SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+            .SetRange wsFiltres.Range("A7:H" & lastRowFiltres)
+            .Header = xlYes
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+    End If
     
-    ' Initialiser les variables pour le suivi des sections
-    Dim debutSection As Long
-    Dim finSection As Long
-    Dim sommeJours As Double
-    
-    ' Itérer sur les lignes pour ajuster les sommois dans chaque section
-    debutSection = 8 ' Commencer à partir de la ligne 8 où commencent les données
-    For i = 8 To lastRowFiltres
-        If wsFiltres.Cells(i, 1).Value <> wsFiltres.Cells(i + 1, 1).Value Or i = lastRowFiltres Then
-            ' Si la section change ou si c'est la dernière ligne, calculer la somme des jours dans la section
-            finSection = i
-            ' Calculer la somme des jours dans la section
-            sommeJours = Application.WorksheetFunction.Sum(wsFiltres.Range("E" & debutSection & ":E" & finSection))
-            
-            ' Problème en janvier
-            If sommeJours = 0 Then
-                sommeJours = 1
-            End If
-            
-            ' Ajuster la somme des jours à la quantité de jours dans la section
-            Dim proportionJours As Double
-            proportionJours = joursDeTravail / sommeJours
-            
-            ' Appliquer l'ajustement à la colonne E dans la section
-            For j = debutSection To finSection
-                wsFiltres.Cells(j, 5).Value = Round(wsFiltres.Cells(j, 5).Value * proportionJours, 0)
-            Next j
-            
-            ' Recalculer la somme des jours après l'ajustement
-            sommeJours = Application.WorksheetFunction.Sum(wsFiltres.Range("E" & debutSection & ":E" & finSection))
-            
-            ' Si la somme de la section dépasse joursDeTravail, soustraire l'excédent du dernier jour de la section
-            If sommeJours > joursDeTravail Then
-                wsFiltres.Cells(finSection, 5).Value = wsFiltres.Cells(finSection, 5).Value - (sommeJours - joursDeTravail)
-            End If
-            
-            ' Si la somme de la section est inférieure à joursDeTravail, ajouter la différence au dernier jour de la section
-            If sommeJours < joursDeTravail Then
-                wsFiltres.Cells(finSection, 5).Value = wsFiltres.Cells(finSection, 5).Value + (joursDeTravail - sommeJours)
-            End If
-            
-        ' Mettre à jour le début de la section suivante
-        debutSection = i + 1
-        End If
-    Next i
+    ' Ajuster les sommes des sections
+    AjustarSommes wsFiltres, joursDeTravail
     
     ' Copier et coller les valeurs des colonnes D et E à la fin du tableau
     wsFiltres.Range("D8:E" & lastRowFiltres).Value = wsFiltres.Range("D8:E" & lastRowFiltres).Value
@@ -295,8 +259,8 @@ Sub CreerTableFiltres()
     ' Appliquer un style à la table
     wsFiltres.ListObjects.Add(xlSrcRange, wsFiltres.Range("A7:H" & lastRowFiltres), , xlYes).TableStyle = "TableStyleMedium9"
     
-    ' Exécuter la macro MultiplicarPourcentage
-    MultiplierPourcentage wb ' Pasar el libro de trabajo como parámetro
+    ' Exécuter la macro MultiplierPourcentage
+    MultiplierPourcentage wb
     
     ' Enregistrer le nouveau document et copier la feuille FILTRES dans le nouveau classeur
     Dim newWorkbook As Workbook
@@ -343,6 +307,72 @@ Sub CreerTableFiltres()
     
     ' Fermer le fichier de données sans enregistrer les modifications
     wbPersonnel.Close SaveChanges:=False
+End Sub
+
+Sub AjustarSommes(wsFiltres As Worksheet, joursDeTravail As Long)
+    Dim debutSection As Long
+    Dim finSection As Long
+    Dim sommeJours As Double
+    Dim i As Long, j As Long
+    Dim difference As Long
+    
+    debutSection = 8 ' Commencer à partir de la ligne 8 où commencent les données
+    
+    For i = 8 To wsFiltres.Cells(wsFiltres.Rows.Count, "A").End(xlUp).Row
+        If wsFiltres.Cells(i, 1).Value <> wsFiltres.Cells(i + 1, 1).Value Or i = wsFiltres.Cells(wsFiltres.Rows.Count, "A").End(xlUp).Row Then
+            finSection = i
+            ' Calculer la somme des jours dans la section
+            sommeJours = Application.WorksheetFunction.Sum(wsFiltres.Range("E" & debutSection & ":E" & finSection))
+            
+            ' Assurez-vous que sommeJours n'est pas zéro
+            If sommeJours = 0 Then
+                sommeJours = 1
+            End If
+            
+            ' Ajuster la somme des jours à la quantité de jours dans la section
+            Dim proportionJours As Double
+            proportionJours = joursDeTravail / sommeJours
+            
+            ' Appliquer l'ajustement à la colonne E dans la section
+            For j = debutSection To finSection
+                wsFiltres.Cells(j, 5).Value = Round(wsFiltres.Cells(j, 5).Value * proportionJours, 0)
+            Next j
+            
+            ' Recalculer la somme des jours après l'ajustement
+            sommeJours = Application.WorksheetFunction.Sum(wsFiltres.Range("E" & debutSection & ":E" & finSection))
+            
+            ' Ajuster la somme des jours pour qu'elle corresponde à joursDeTravail
+            difference = joursDeTravail - sommeJours
+            
+            If difference <> 0 Then
+                If difference > 0 Then
+                    ' Ajouter des jours si la différence est positive
+                    For j = finSection To debutSection Step -1
+                        If difference = 0 Then Exit For
+                        wsFiltres.Cells(j, 5).Value = wsFiltres.Cells(j, 5).Value + 1
+                        difference = difference - 1
+                    Next j
+                Else
+                    ' Retirer des jours si la différence est négative
+                    For j = finSection To debutSection Step -1
+                        If difference = 0 Then Exit For
+                        If wsFiltres.Cells(j, 5).Value > 0 Then
+                            If wsFiltres.Cells(j, 5).Value + difference >= 0 Then
+                                wsFiltres.Cells(j, 5).Value = wsFiltres.Cells(j, 5).Value + difference
+                                difference = 0
+                            Else
+                                difference = difference + wsFiltres.Cells(j, 5).Value
+                                wsFiltres.Cells(j, 5).Value = 0
+                            End If
+                        End If
+                    Next j
+                End If
+            End If
+            
+            ' Mettre à jour le début de la section suivante
+            debutSection = i + 1
+        End If
+    Next i
 End Sub
 
 Sub MultiplierPourcentage(wb As Workbook)
@@ -611,3 +641,4 @@ Function SheetExists(sheetName As String) As Boolean
     SheetExists = Not ws Is Nothing
     
 End Function
+
