@@ -23,13 +23,13 @@ Sub CreerTableFiltres()
     Dim tempFilePath As String
     Dim uniqueID As String
     
-    ' Referenciar el libro de trabajo actual explícitamente
+    ' Référencer le livre de travail actuel explicitement
     Set wb = ThisWorkbook
     
     ' Demander à l'utilisateur de sélectionner le mois
     mois = InputBox("S'il vous plaît, entrez le mois (en formato MMM):", "Sélection du mois")
-    
-    If mois = "" Then Exit Sub ' Quitter si l'utilisateur annule
+    ' Quitter si l'utilisateur annule
+    If mois = "" Then Exit Sub
     
     ' Convertir le mois saisi en majuscules et enlever les accents
     mois = RemoveAccents(UCase(mois))
@@ -97,31 +97,31 @@ Sub CreerTableFiltres()
     Nom_complet_fichier_de_traitement = Application.GetOpenFilename(, , "Veuillez sélectionner le fichier contenant la feuille de PRC")
     If Nom_complet_fichier_de_traitement = "False" Then Exit Sub ' Quitter si l'utilisateur annule
     
-    ' Verificar la extensión del archivo
+    ' Vérifier l'extension du fichier
     fileExtension = Right(Nom_complet_fichier_de_traitement, Len(Nom_complet_fichier_de_traitement) - InStrRev(Nom_complet_fichier_de_traitement, "."))
     
-    ' Generar un identificador único basado en la fecha y hora actuales
+    ' Générer un identifiant unique basé sur la date et l'heure actuelles
     uniqueID = Format(Now, "yyyymmddHHMMSS")
     
-    ' Si es un archivo CSV, convertirlo a XLSX y separar las columnas
+    ' S'il s'agit d'un fichier CSV, convertissez-le en XLSX et séparez les colonnes
     If fileExtension = "csv" Or fileExtension = "CSV" Then
-        ' Abrir el archivo CSV
+        ' Ouvrir le fichier CSV
         Workbooks.OpenText fileName:=Nom_complet_fichier_de_traitement, Origin:=xlMSDOS, startRow:=1, DataType:=xlDelimited, _
             TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=True, Comma:=False, Space:=False, Other:=False, _
             FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1)), TrailingMinusNumbers:=True
             
-        ' Referencia el archivo abierto
+        ' Référence du fichier ouvert
         Set tempWorkbook = ActiveWorkbook
         
-        ' Guardar el archivo CSV como XLSX en una ubicación temporal con un nombre único
+        ' Enregistrez le fichier CSV au format XLSX dans un emplacement temporaire avec un nom unique
         tempFilePath = Environ("TEMP") & "\temp_converted_file_" & uniqueID & ".xlsx"
         tempWorkbook.SaveAs fileName:=tempFilePath, FileFormat:=xlOpenXMLWorkbook
         tempWorkbook.Close SaveChanges:=False
         
-        ' Abrir el archivo convertido
+        ' Ouvrir le fichier converti
         Set wbPersonnel = Workbooks.Open(tempFilePath)
     Else
-        ' Abrir el archivo directamente si no es un CSV
+        ' Ouvrir le fichier directement s'il ne s'agit pas d'un CSV
         Set wbPersonnel = Workbooks.Open(Nom_complet_fichier_de_traitement)
     End If
     
@@ -231,7 +231,7 @@ Sub CreerTableFiltres()
         End If
     Next i
     
-    ' Verificar que lastRowFiltres sea mayor o igual a 8
+    ' Vérifier que lastRowFiltres est supérieur ou égal à 8
     If lastRowFiltres >= 8 Then
         ' Trier le tableau par la colonne NOM
         With wsFiltres.Sort
@@ -641,4 +641,3 @@ Function SheetExists(sheetName As String) As Boolean
     SheetExists = Not ws Is Nothing
     
 End Function
-
